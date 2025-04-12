@@ -1,7 +1,5 @@
 # Project Goal
 
-# Project Goal
-
 ## Overview
 Build a lightweight macOS menu bar application for monitoring network devices with real-time status updates.
 
@@ -25,3 +23,6 @@ Build a lightweight macOS menu bar application for monitoring network devices wi
 - Clear visual feedback for device status
 - Quick access to device information
 - Seamless integration with macOS ecosystem
+
+## Final Outcome
+An app that can be installed on MacOS where it goes in the NavBar and the list of devices and be added and interacted with.
