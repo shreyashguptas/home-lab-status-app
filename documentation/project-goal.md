@@ -1,3 +1,27 @@
 # Project Goal
 
-with this project i want to build a very simple and performative and stable app that will reside in the max nav bar and when clicking on it it allows us to see a bunch of devices that we will configure the name of an ip address off and it'll ping those devices and if the ping comes back then it'll show a green status saying like the device is running and is on and if it's red then there's an issue with it and also the ability to add a new device and remove existing devices and also the ability to copy the ip address of these devices easily. 
+# Project Goal
+
+## Overview
+Build a lightweight macOS menu bar application for monitoring network devices with real-time status updates.
+
+## Core Features
+- **Menu Bar Integration**: Persistent presence in macOS menu bar for quick access
+- **Device Monitoring**: 
+  - Real-time status tracking through ICMP ping
+  - Visual status indicators (green for online, red for offline)
+  - Configurable device names and IP addresses
+- **Device Management**:
+  - Add new devices to monitor
+  - Remove existing devices
+  - Quick IP address copying functionality
+- **Performance Requirements**:
+  - Minimal memory footprint
+  - Efficient background operation
+  - Stable and reliable monitoring
+
+## User Experience
+- Intuitive interface for device management
+- Clear visual feedback for device status
+- Quick access to device information
+- Seamless integration with macOS ecosystem
