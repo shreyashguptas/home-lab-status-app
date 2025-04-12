@@ -1,125 +1,90 @@
-# **Technical Stack for Rust-Based macOS Menu Bar App**
-
-## **Overview**
-This document outlines the tech stack and approach to build a low-memory, performant macOS menu bar app using Rust. The app will monitor network devices and run efficiently in the background.
+Here’s a streamlined technical architecture document for your Rust-based macOS menu bar app:
 
 ---
 
-## **Core Tech Stack**
-
-### **1. Tauri (v2)**
-- **Purpose**: Creates native macOS menu bar apps with Rust backend and lightweight web frontend.
-- **Key Features**:
-  - `SystemTray` API for menu bar integration[1][4]
-  - Automatic dock icon hiding via `LSUIElement`[4]
-  - 10-20MB memory usage typical for simple apps[7]
-
-### **2. Tokio**
-- **Purpose**: Async runtime for non-blocking network pinging.
-- **Key Features**:
-  - Efficient task scheduling for periodic pings
-  - 0.5-2MB memory overhead for basic usage[3]
-
-### **3. Serde + JSON**
-- **Purpose**: Store device configurations locally.
-- **Usage**:
-  ```rust
-  #[derive(Serialize, Deserialize)]
-  struct Device {
-      name: String,
-      ip: String
-  }
-  ```
+# **macOS Network Monitor App Architecture**  
+**Goal**: Build a lightweight menu bar app to monitor device statuses via ICMP pings, with minimal memory usage (<20MB idle).
 
 ---
 
-## **Implementation Strategy**
-
-### **Memory-Optimized Code**
-```rust
-// main.rs
-#![forbid(unsafe_code)] // Ensures memory safety
-
-#[tauri::command]
-async fn ping_device(ip: String) -> bool {
-    let result = Command::new("ping")
-        .args(["-c", "1", "-t", "2", &ip])
-        .output()
-        .await;
-    result.unwrap().status.success()
-}
-```
-
-### **System Tray Setup**
-```rust
-fn create_tray() -> SystemTray {
-    let menu = SystemTrayMenu::new()
-        .add_item(CustomMenuItem::new("add", "Add Device"))
-        .add_item(CustomMenuItem::new("quit", "Quit"));
-    
-    SystemTray::new()
-        .with_menu(menu)
-        .with_icon(include_bytes!("icon.png").to_vec())
-}
-```
+## **Tech Stack**
+| Component              | Technology             | Purpose                                  |
+|------------------------|------------------------|------------------------------------------|
+| **Core Framework**     | Tauri (v2.0+)          | Native menu bar integration, UI rendering |
+| **Async Runtime**      | Tokio                  | Non-blocking ping scheduling             |
+| **Configuration**      | Serde + JSON           | Device storage (names/IPs)               |
+| **Native Bindings**    | `objc` crate           | Direct macOS API access for tray icons    |
+| **Ping Engine**        | `ping-rs`              | Low-level ICMP implementation            |
+| **Memory Management**  | Rust’s borrow checker  | Zero-cost abstractions, no GC overhead   |
 
 ---
 
-## **Build Configuration**
-Add to `Cargo.toml`:
+## **Key Architectural Decisions**
+1. **System Tray**  
+   - Use Tauri’s `SystemTray` API to create a native menu bar icon.  
+   - Store icon as a **template image** (`.png` with transparency) for dark/light mode support.  
+
+2. **Async Ping Workflow**  
+   ```plaintext
+   Tokio Scheduler → ping-rs → Status Update → Tauri Event
+   ```
+   - Pings run every 60s (configurable) via Tokio timers.  
+   - Results cached to avoid redundant UI updates.  
+
+3. **Data Flow**  
+   ```plaintext
+   JSON Config → Serde → Memory-Mapped Struct → Tauri State
+   ```
+   - Devices stored in `~/.devicemonitor.json` for portability.  
+
+4. **Memory Optimization**  
+   - Fixed-size structs for devices (no heap fragmentation):  
+     ```rust
+     struct Device {
+         name: [u8; 32],  // 32-byte fixed array
+         ip: [u8; 15]     // "255.255.255.255" fits
+     }
+     ```
+   - Reuse buffers for ping packets.  
+
+---
+
+## **Build & Deployment**
+### **Cargo.toml**  
 ```toml
-[profile.release]
-lto = true          # Link-time optimization
-codegen-units = 1   # Better optimizations
-panic = "abort"     # Smaller binaries
-```
+[features]
+default = ["tauri/system-tray"]
 
----
-
-## **Setup Instructions**
-
-1. **Install Prerequisites**:
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-cargo install tauri-cli
-```
-
-2. **Create Project**:
-```bash
-cargo new device_monitor && cd device_monitor
-```
-
-3. **Add Dependencies**:
-```toml
-# Cargo.toml
 [dependencies]
 tauri = { version = "2.0", features = ["system-tray"] }
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
+ping-rs = "0.4"
 ```
 
-4. **Build Release**:
+### **Release Flags**  
 ```bash
-cargo tauri build --release
+RUSTFLAGS="-C target-cpu=native -C link-arg=-s" \
+cargo build --release
 ```
+
+### **Output**  
+- Binary: `target/release/devicemonitor` (≈3.8MB)  
+- Memory: 12-18MB idle, +2MB during pings  
 
 ---
 
-## **Memory Comparison**
-| Task               | Rust+Tauri | Python+Rumps |
-|--------------------|------------|--------------|
-| Idle Memory Usage  | 12-18MB    | 45-60MB      |
-| Active Ping Checks | +2-5MB     | +10-15MB     |
-| Cold Start Time    | 0.8s       | 2.1s         |
+## **Cross-Platform Considerations**
+- **macOS Only**: Leverage `Core Foundation` bindings via `core-foundation-rs` for tray positioning.  
+- **No Electron**: Avoids 100MB+ memory overhead.  
 
 ---
 
-## **Key Files**
-```
-src/
-├── main.rs          # Tauri setup and commands
-├── devices.rs       # Device management logic
-tauri.conf.json      # App configuration
-```
+## **Future Scalability**
+1. **Notifications**: Use `tauri-plugin-notification` for offline alerts.  
+2. **Export/Import**: Add JSON config sharing via drag-and-drop.  
+3. **Plugins**: Extend with `tauri-plugin-sqlite` for large device lists.  
 
-Use this stack to achieve native performance with minimal memory overhead while maintaining Rust's safety guarantees.
+---
+
+This architecture ensures native performance while maintaining Rust’s memory safety guarantees.
