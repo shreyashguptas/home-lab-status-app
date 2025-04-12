@@ -1,0 +1,3 @@
+# Project Goal
+
+with this project i want to build a very simple and performative and stable app that will reside in the max nav bar and when clicking on it it allows us to see a bunch of devices that we will configure the name of an ip address off and it'll ping those devices and if the ping comes back then it'll show a green status saying like the device is running and is on and if it's red then there's an issue with it and also the ability to add a new device and remove existing devices and also the ability to copy the ip address of these devices easily. 
