@@ -1,7 +1,3 @@
-Here’s a streamlined technical architecture document for your Rust-based macOS menu bar app:
-
----
-
 # **macOS Network Monitor App Architecture**  
 **Goal**: Build a lightweight menu bar app to monitor device statuses via ICMP pings, with minimal memory usage (<20MB idle).
 
