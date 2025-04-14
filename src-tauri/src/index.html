@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Lab Status</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .device-list {
+            margin-top: 20px;
+        }
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-online {
+            background-color: #4CAF50;
+        }
+        .status-offline {
+            background-color: #f44336;
+        }
+        .add-device-form {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Home Lab Status</h1>
+        <div class="add-device-form">
+            <input type="text" id="deviceName" placeholder="Device Name">
+            <input type="text" id="deviceIP" placeholder="IP Address">
+            <button onclick="addDevice()">Add Device</button>
+        </div>
+        <div class="device-list" id="deviceList"></div>
+    </div>
+    <script>
+        async function addDevice() {
+            const name = document.getElementById('deviceName').value;
+            const ip = document.getElementById('deviceIP').value;
+            if (name && ip) {
+                await window.__TAURI__.invoke('add_device', { name, ip });
+                document.getElementById('deviceName').value = '';
+                document.getElementById('deviceIP').value = '';
+                updateDeviceList();
+            }
+        }
+
+        async function removeDevice(index) {
+            await window.__TAURI__.invoke('remove_device', { index });
+            updateDeviceList();
+        }
+
+        async function updateDeviceList() {
+            const devices = await window.__TAURI__.invoke('get_devices');
+            const deviceList = document.getElementById('deviceList');
+            deviceList.innerHTML = '';
+            devices.forEach((device, index) => {
+                const div = document.createElement('div');
+                div.className = 'device-item';
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <div class="status-indicator ${device.status ? 'status-online' : 'status-offline'}"></div>
+                        <span>${device.name} (${device.ip})</span>
+                    </div>
+                    <button onclick="removeDevice(${index})">Remove</button>
+                `;
+                deviceList.appendChild(div);
+            });
+        }
+
+        // Update device list every 60 seconds
+        setInterval(updateDeviceList, 60000);
+        updateDeviceList();
+    </script>
+</body>
+</html> 

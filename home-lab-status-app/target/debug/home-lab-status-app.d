@@ -1,0 +1,1 @@
+/Users/shreyashgupta/Documents/GitHub/home-lab-status-app/home-lab-status-app/target/debug/home-lab-status-app: /Users/shreyashgupta/Documents/GitHub/home-lab-status-app/home-lab-status-app/src/main.rs
